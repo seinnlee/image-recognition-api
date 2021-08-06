@@ -1,8 +1,11 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 const database = {
   users: [
@@ -10,7 +13,7 @@ const database = {
       id: '123',
       name: 'John',
       email: 'john@gmail.com',
-      password: 'ilovecookies',
+      password: 'cookies',
       entries: 0,
       joined: new Date()
     },
@@ -22,33 +25,57 @@ const database = {
       entries: 0,
       joined: new Date()
     }
-  ]
+  ],
+  // login: [
+  //   {
+  //     id: '987',
+  //     hash: '',
+  //     email: 'john@gmail.com'
+  //   }
+  // ]
 }
+
+const saltRounds = 10;
 
 app.get('/', (req, res) => {
   res.send(database.users);
 })
 
 app.post('/signin', (req, res) => {
-  if (req.body.email === database.users[0].email
-    && req.body.password === database.users[0].password) {
-    res.json("success");
+  const { email, password } = req.body;
+  // const userHash = database.login[0].hash;
+  if (email === database.users[0].email && password === database.users[0].password) {
+    res.send(database.users[0]);
   } else {
-    res.status(400).json("error logging in");
+    res.status(400).json("wrong credentials");
   }
+  // if (email === database.users[0].email) {
+  //   bcrypt.compare(password, userHash, function (err, result) {
+  //     console.log("first guess", res);
+  //     res.send("success");
+  //   });
+  //   bcrypt.compare(password, userHash, function (err, result) {
+  //     console.log("second guess", res);
+  //     res.status(400).send("wrong password");
+  //   });
+  // } else {
+  //   res.status(400).json("wrong email");
+  // }
 })
 
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
+  bcrypt.hash(password, saltRounds, function (err, hash) {
+    console.log(hash);
+  });
   database.users.push({
     id: '125',
     name: name,
     email: email,
-    password: password,
     entries: 0,
     joined: new Date()
   });
-  res.json(database.users[database.users.length-1]);
+  res.json(database.users[database.users.length - 1]);
 })
 
 app.get('/profile/:id', (req, res) => {
@@ -65,7 +92,7 @@ app.get('/profile/:id', (req, res) => {
   }
 })
 
-app.post('/image', (req, res) => {
+app.put('/image', (req, res) => {
   const { id } = req.body;
   let found = false;
   database.users.forEach(user => {
@@ -79,6 +106,13 @@ app.post('/image', (req, res) => {
     res.status(400).json("not found");
   }
 })
+
+// const checkUserPassword = (enteredPW, storedPW) => {
+//   bcrypt.compare(enteredPW, storedPW);
+// }
+
+
+
 
 app.listen(3000, () => {
   console.log("app is running on port 3000");
